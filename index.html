@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindWell - Mental Health Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card-shadow { box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .mood-emoji { font-size: 2rem; cursor: pointer; transition: all 0.3s ease; }
+        .mood-emoji:hover { transform: scale(1.2); }
+        .mood-emoji.selected { transform: scale(1.3); filter: drop-shadow(0 0 10px rgba(102, 126, 234, 0.5)); }
+        .pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        .slide-in { animation: slideIn 0.5s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="gradient-bg text-white p-6 shadow-lg">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center">
+                    <span class="text-2xl">🧠</span>
+                </div>
+                <h1 class="text-2xl font-bold">MindWell</h1>
+            </div>
+            <nav class="hidden md:flex space-x-6">
+                <button onclick="showSection('dashboard')" class="nav-btn hover:text-blue-200 transition-colors">Dashboard</button>
+                <button onclick="showSection('checkin')" class="nav-btn hover:text-blue-200 transition-colors">Check-in</button>
+                <button onclick="showSection('trends')" class="nav-btn hover:text-blue-200 transition-colors">Trends</button>
+                <button onclick="showSection('wellness')" class="nav-btn hover:text-blue-200 transition-colors">Wellness</button>
+            </nav>
+            <div class="md:hidden">
+                <button onclick="toggleMobileMenu()" class="text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobileMenu" class="hidden md:hidden mt-4 space-y-2">
+            <button onclick="showSection('dashboard')" class="block w-full text-left py-2 hover:text-blue-200">Dashboard</button>
+            <button onclick="showSection('checkin')" class="block w-full text-left py-2 hover:text-blue-200">Check-in</button>
+            <button onclick="showSection('trends')" class="block w-full text-left py-2 hover:text-blue-200">Trends</button>
+            <button onclick="showSection('wellness')" class="block w-full text-left py-2 hover:text-blue-200">Wellness</button>
+        </div>
+    </header>
+
+    <div class="max-w-6xl mx-auto p-6">
+        <!-- Dashboard Section -->
+        <div id="dashboard" class="section">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Stats Cards -->
+                <div class="bg-white rounded-xl p-6 card-shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm">Current Streak</p>
+                            <p class="text-2xl font-bold text-blue-600" id="streakCount">7</p>
+                        </div>
+                        <div class="text-3xl">🔥</div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 card-shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm">Average Mood</p>
+                            <p class="text-2xl font-bold text-green-600" id="avgMood">7.2</p>
+                        </div>
+                        <div class="text-3xl">😊</div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 card-shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm">Total Check-ins</p>
+                            <p class="text-2xl font-bold text-purple-600" id="totalCheckins">42</p>
+                        </div>
+                        <div class="text-3xl">📊</div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 card-shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm">Wellness Score</p>
+                            <p class="text-2xl font-bold text-orange-600" id="wellnessScore">85</p>
+                        </div>
+                        <div class="text-3xl">⭐</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="bg-white rounded-xl p-6 card-shadow mb-8">
+                <h2 class="text-xl font-semibold mb-4">Quick Actions</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <button onclick="showSection('checkin')" class="bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-lg transition-colors flex items-center space-x-3">
+                        <span class="text-2xl">📝</span>
+                        <span>Daily Check-in</span>
+                    </button>
+                    <button onclick="showSection('trends')" class="bg-green-500 hover:bg-green-600 text-white p-4 rounded-lg transition-colors flex items-center space-x-3">
+                        <span class="text-2xl">📈</span>
+                        <span>View Trends</span>
+                    </button>
+                    <button onclick="showSection('wellness')" class="bg-purple-500 hover:bg-purple-600 text-white p-4 rounded-lg transition-colors flex items-center space-x-3">
+                        <span class="text-2xl">🎯</span>
+                        <span>Wellness Tips</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="bg-white rounded-xl p-6 card-shadow">
+                <h2 class="text-xl font-semibold mb-4">Recent Activity</h2>
+                <div id="recentActivity" class="space-y-3">
+                    <!-- Activity items will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Check-in Section -->
+        <div id="checkin" class="section hidden">
+            <div class="bg-white rounded-xl p-8 card-shadow max-w-2xl mx-auto">
+                <h2 class="text-2xl font-bold text-center mb-6">Daily Mood Check-in</h2>
+                
+                <!-- Mood Selection -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold mb-4">How are you feeling today?</h3>
+                    <div class="flex justify-center space-x-4 mb-4">
+                        <span class="mood-emoji" data-mood="1" onclick="selectMood(1)">😢</span>
+                        <span class="mood-emoji" data-mood="2" onclick="selectMood(2)">😟</span>
+                        <span class="mood-emoji" data-mood="3" onclick="selectMood(3)">😐</span>
+                        <span class="mood-emoji" data-mood="4" onclick="selectMood(4)">🙂</span>
+                        <span class="mood-emoji" data-mood="5" onclick="selectMood(5)">😊</span>
+                        <span class="mood-emoji" data-mood="6" onclick="selectMood(6)">😄</span>
+                        <span class="mood-emoji" data-mood="7" onclick="selectMood(7)">🤩</span>
+                    </div>
+                    <div class="text-center">
+                        <span id="moodLabel" class="text-gray-600">Select your mood</span>
+                    </div>
+                </div>
+
+                <!-- Energy Level -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold mb-4">Energy Level (1-10)</h3>
+                    <input type="range" id="energySlider" min="1" max="10" value="5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    <div class="flex justify-between text-sm text-gray-600 mt-2">
+                        <span>Low</span>
+                        <span id="energyValue">5</span>
+                        <span>High</span>
+                    </div>
+                </div>
+
+                <!-- Journal Entry -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold mb-4">What's on your mind? (Optional)</h3>
+                    <textarea id="journalEntry" placeholder="Share your thoughts, feelings, or what happened today..." class="w-full p-4 border border-gray-300 rounded-lg resize-none h-32 focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                    <div class="mt-2 text-sm text-gray-600">
+                        Sentiment: <span id="sentimentAnalysis" class="font-semibold">Neutral</span>
+                    </div>
+                </div>
+
+                <!-- Activities -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold mb-4">Activities Today</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" class="activity-checkbox" data-activity="exercise">
+                            <span>🏃 Exercise</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" class="activity-checkbox" data-activity="meditation">
+                            <span>🧘 Meditation</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" class="activity-checkbox" data-activity="social">
+                            <span>👥 Social Time</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" class="activity-checkbox" data-activity="nature">
+                            <span>🌳 Nature</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" class="activity-checkbox" data-activity="creative">
+                            <span>🎨 Creative</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" class="activity-checkbox" data-activity="reading">
+                            <span>📚 Reading</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" class="activity-checkbox" data-activity="work">
+                            <span>💼 Work</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" class="activity-checkbox" data-activity="sleep">
+                            <span>😴 Good Sleep</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button onclick="submitCheckin()" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold transition-colors">
+                    Complete Check-in
+                </button>
+            </div>
+        </div>
+
+        <!-- Trends Section -->
+        <div id="trends" class="section hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Mood Trend Chart -->
+                <div class="bg-white rounded-xl p-6 card-shadow">
+                    <h2 class="text-xl font-semibold mb-4">Mood Trends (Last 30 Days)</h2>
+                    <canvas id="moodChart" width="400" height="200"></canvas>
+                </div>
+
+                <!-- Energy Trend Chart -->
+                <div class="bg-white rounded-xl p-6 card-shadow">
+                    <h2 class="text-xl font-semibold mb-4">Energy Levels</h2>
+                    <canvas id="energyChart" width="400" height="200"></canvas>
+                </div>
+
+                <!-- Activity Heatmap -->
+                <div class="bg-white rounded-xl p-6 card-shadow lg:col-span-2">
+                    <h2 class="text-xl font-semibold mb-4">Activity Patterns</h2>
+                    <div id="activityHeatmap" class="grid grid-cols-7 gap-2">
+                        <!-- Heatmap will be generated by JavaScript -->
+                    </div>
+                    <div class="mt-4 flex justify-between text-sm text-gray-600">
+                        <span>Less Active</span>
+                        <span>More Active</span>
+                    </div>
+                </div>
+
+                <!-- Insights -->
+                <div class="bg-white rounded-xl p-6 card-shadow lg:col-span-2">
+                    <h2 class="text-xl font-semibold mb-4">Insights & Patterns</h2>
+                    <div id="insights" class="space-y-4">
+                        <!-- Insights will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Wellness Section -->
+        <div id="wellness" class="section hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Personalized Recommendations -->
+                <div class="lg:col-span-2">
+                    <div class="bg-white rounded-xl p-6 card-shadow mb-8">
+                        <h2 class="text-xl font-semibold mb-4">Personalized Recommendations</h2>
+                        <div id="recommendations" class="space-y-4">
+                            <!-- Recommendations will be populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Wellness Resources -->
+                    <div class="bg-white rounded-xl p-6 card-shadow">
+                        <h2 class="text-xl font-semibold mb-4">Wellness Resources</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-pointer">
+                                <div class="text-2xl mb-2">🧘‍♀️</div>
+                                <h3 class="font-semibold">Guided Meditation</h3>
+                                <p class="text-sm text-gray-600">5-minute breathing exercises</p>
+                            </div>
+                            <div class="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-pointer">
+                                <div class="text-2xl mb-2">📱</div>
+                                <h3 class="font-semibold">Mindfulness Apps</h3>
+                                <p class="text-sm text-gray-600">Recommended mobile apps</p>
+                            </div>
+                            <div class="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-pointer">
+                                <div class="text-2xl mb-2">📞</div>
+                                <h3 class="font-semibold">Crisis Support</h3>
+                                <p class="text-sm text-gray-600">24/7 helpline numbers</p>
+                            </div>
+                            <div class="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-pointer">
+                                <div class="text-2xl mb-2">👨‍⚕️</div>
+                                <h3 class="font-semibold">Find Therapists</h3>
+                                <p class="text-sm text-gray-600">Local mental health professionals</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wellness Score -->
+                <div class="space-y-6">
+                    <div class="bg-white rounded-xl p-6 card-shadow">
+                        <h2 class="text-xl font-semibold mb-4">Wellness Score</h2>
+                        <div class="text-center">
+                            <div class="relative w-32 h-32 mx-auto mb-4">
+                                <svg class="w-32 h-32 transform -rotate-90">
+                                    <circle cx="64" cy="64" r="56" stroke="#e5e7eb" stroke-width="8" fill="none"></circle>
+                                    <circle cx="64" cy="64" r="56" stroke="#3b82f6" stroke-width="8" fill="none" 
+                                            stroke-dasharray="351.86" stroke-dashoffset="70.37" stroke-linecap="round"></circle>
+                                </svg>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <span class="text-2xl font-bold text-blue-600">85</span>
+                                </div>
+                            </div>
+                            <p class="text-gray-600">Great progress this week!</p>
+                        </div>
+                    </div>
+
+                    <!-- Daily Goals -->
+                    <div class="bg-white rounded-xl p-6 card-shadow">
+                        <h2 class="text-xl font-semibold mb-4">Daily Goals</h2>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="flex items-center space-x-2">
+                                    <input type="checkbox" checked class="rounded">
+                                    <span>Mood check-in</span>
+                                </span>
+                                <span class="text-green-500">✓</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="flex items-center space-x-2">
+                                    <input type="checkbox" class="rounded">
+                                    <span>10 min meditation</span>
+                                </span>
+                                <span class="text-gray-400">○</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="flex items-center space-x-2">
+                                    <input type="checkbox" checked class="rounded">
+                                    <span>Physical activity</span>
+                                </span>
+                                <span class="text-green-500">✓</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="flex items-center space-x-2">
+                                    <input type="checkbox" class="rounded">
+                                    <span>Gratitude journal</span>
+                                </span>
+                                <span class="text-gray-400">○</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Motivational Quote -->
+                    <div class="bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl p-6 text-white">
+                        <h3 class="font-semibold mb-2">Daily Inspiration</h3>
+                        <p class="text-sm italic">"The greatest revolution of our generation is the discovery that human beings, by changing the inner attitudes of their minds, can change the outer aspects of their lives."</p>
+                        <p class="text-xs mt-2 opacity-80">- William James</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentMood = null;
+        let moodData = [];
+        let energyData = [];
+        let checkinData = JSON.parse(localStorage.getItem('mindwellData')) || [];
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+            updateDashboard();
+            setupEventListeners();
+        });
+
+        function initializeApp() {
+            // Generate sample data if none exists
+            if (checkinData.length === 0) {
+                generateSampleData();
+            }
+            
+            // Show dashboard by default
+            showSection('dashboard');
+            
+            // Initialize charts
+            setTimeout(() => {
+                initializeCharts();
+            }, 100);
+        }
+
+        function generateSampleData() {
+            const activities = ['exercise', 'meditation', 'social', 'nature', 'creative', 'reading', 'work', 'sleep'];
+            const sentiments = ['positive', 'neutral', 'negative'];
+            
+            for (let i = 30; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                
+                const mood = Math.floor(Math.random() * 7) + 1;
+                const energy = Math.floor(Math.random() * 10) + 1;
+                const selectedActivities = activities.filter(() => Math.random() > 0.6);
+                
+                checkinData.push({
+                    date: date.toISOString().split('T')[0],
+                    mood: mood,
+                    energy: energy,
+                    activities: selectedActivities,
+                    journal: `Sample journal entry for ${date.toDateString()}`,
+                    sentiment: sentiments[Math.floor(Math.random() * sentiments.length)]
+                });
+            }
+            
+            localStorage.setItem('mindwellData', JSON.stringify(checkinData));
+        }
+
+        function setupEventListeners() {
+            // Energy slider
+            const energySlider = document.getElementById('energySlider');
+            if (energySlider) {
+                energySlider.addEventListener('input', function() {
+                    document.getElementById('energyValue').textContent = this.value;
+                });
+            }
+
+            // Journal sentiment analysis
+            const journalEntry = document.getElementById('journalEntry');
+            if (journalEntry) {
+                journalEntry.addEventListener('input', function() {
+                    analyzeSentiment(this.value);
+                });
+            }
+        }
+
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.add('hidden');
+            });
+            
+            // Show selected section
+            document.getElementById(sectionName).classList.remove('hidden');
+            document.getElementById(sectionName).classList.add('slide-in');
+            
+            // Update navigation
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-blue-200');
+            });
+            
+            // Hide mobile menu
+            document.getElementById('mobileMenu').classList.add('hidden');
+            
+            // Initialize section-specific content
+            if (sectionName === 'trends') {
+                setTimeout(() => initializeCharts(), 100);
+            } else if (sectionName === 'wellness') {
+                generateRecommendations();
+            }
+        }
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            menu.classList.toggle('hidden');
+        }
+
+        function selectMood(mood) {
+            currentMood = mood;
+            
+            // Update visual selection
+            document.querySelectorAll('.mood-emoji').forEach(emoji => {
+                emoji.classList.remove('selected');
+            });
+            document.querySelector(`[data-mood="${mood}"]`).classList.add('selected');
+            
+            // Update mood label
+            const labels = {
+                1: 'Very Sad', 2: 'Sad', 3: 'Neutral', 
+                4: 'Good', 5: 'Happy', 6: 'Very Happy', 7: 'Excellent'
+            };
+            document.getElementById('moodLabel').textContent = labels[mood];
+        }
+
+        function analyzeSentiment(text) {
+            if (!text.trim()) {
+                document.getElementById('sentimentAnalysis').textContent = 'Neutral';
+                return;
+            }
+            
+            // Simple sentiment analysis
+            const positiveWords = ['happy', 'good', 'great', 'amazing', 'wonderful', 'love', 'excited', 'grateful', 'blessed', 'joy'];
+            const negativeWords = ['sad', 'bad', 'terrible', 'awful', 'hate', 'angry', 'frustrated', 'depressed', 'anxious', 'worried'];
+            
+            const words = text.toLowerCase().split(/\s+/);
+            let positiveCount = 0;
+            let negativeCount = 0;
+            
+            words.forEach(word => {
+                if (positiveWords.some(pw => word.includes(pw))) positiveCount++;
+                if (negativeWords.some(nw => word.includes(nw))) negativeCount++;
+            });
+            
+            let sentiment = 'Neutral';
+            if (positiveCount > negativeCount) sentiment = 'Positive';
+            else if (negativeCount > positiveCount) sentiment = 'Negative';
+            
+            document.getElementById('sentimentAnalysis').textContent = sentiment;
+        }
+
+        function submitCheckin() {
+            if (!currentMood) {
+                alert('Please select your mood first!');
+                return;
+            }
+            
+            const energy = document.getElementById('energySlider').value;
+            const journal = document.getElementById('journalEntry').value;
+            const sentiment = document.getElementById('sentimentAnalysis').textContent.toLowerCase();
+            
+            // Get selected activities
+            const activities = [];
+            document.querySelectorAll('.activity-checkbox:checked').forEach(checkbox => {
+                activities.push(checkbox.dataset.activity);
+            });
+            
+            // Create checkin entry
+            const checkin = {
+                date: new Date().toISOString().split('T')[0],
+                mood: currentMood,
+                energy: parseInt(energy),
+                activities: activities,
+                journal: journal,
+                sentiment: sentiment
+            };
+            
+            // Remove existing entry for today if it exists
+            checkinData = checkinData.filter(entry => entry.date !== checkin.date);
+            
+            // Add new entry
+            checkinData.push(checkin);
+            checkinData.sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            // Save to localStorage
+            localStorage.setItem('mindwellData', JSON.stringify(checkinData));
+            
+            // Show success message
+            alert('Check-in completed successfully! 🎉');
+            
+            // Reset form
+            resetCheckinForm();
+            
+            // Update dashboard
+            updateDashboard();
+            
+            // Go to dashboard
+            showSection('dashboard');
+        }
+
+        function resetCheckinForm() {
+            currentMood = null;
+            document.querySelectorAll('.mood-emoji').forEach(emoji => {
+                emoji.classList.remove('selected');
+            });
+            document.getElementById('moodLabel').textContent = 'Select your mood';
+            document.getElementById('energySlider').value = 5;
+            document.getElementById('energyValue').textContent = '5';
+            document.getElementById('journalEntry').value = '';
+            document.getElementById('sentimentAnalysis').textContent = 'Neutral';
+            document.querySelectorAll('.activity-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+        }
+
+        function updateDashboard() {
+            if (checkinData.length === 0) return;
+            
+            // Calculate streak
+            let streak = 0;
+            const today = new Date();
+            for (let i = 0; i < 30; i++) {
+                const checkDate = new Date(today);
+                checkDate.setDate(today.getDate() - i);
+                const dateStr = checkDate.toISOString().split('T')[0];
+                
+                if (checkinData.some(entry => entry.date === dateStr)) {
+                    streak++;
+                } else {
+                    break;
+                }
+            }
+            
+            // Calculate average mood
+            const avgMood = (checkinData.reduce((sum, entry) => sum + entry.mood, 0) / checkinData.length).toFixed(1);
+            
+            // Calculate wellness score
+            const recentEntries = checkinData.slice(-7);
+            const avgRecentMood = recentEntries.reduce((sum, entry) => sum + entry.mood, 0) / recentEntries.length;
+            const avgRecentEnergy = recentEntries.reduce((sum, entry) => sum + entry.energy, 0) / recentEntries.length;
+            const activityScore = recentEntries.reduce((sum, entry) => sum + entry.activities.length, 0) / recentEntries.length;
+            const wellnessScore = Math.round((avgRecentMood * 10 + avgRecentEnergy * 5 + activityScore * 5) / 2);
+            
+            // Update dashboard stats
+            document.getElementById('streakCount').textContent = streak;
+            document.getElementById('avgMood').textContent = avgMood;
+            document.getElementById('totalCheckins').textContent = checkinData.length;
+            document.getElementById('wellnessScore').textContent = Math.min(wellnessScore, 100);
+            
+            // Update recent activity
+            updateRecentActivity();
+        }
+
+        function updateRecentActivity() {
+            const recentActivity = document.getElementById('recentActivity');
+            const recent = checkinData.slice(-5).reverse();
+            
+            recentActivity.innerHTML = recent.map(entry => {
+                const date = new Date(entry.date);
+                const moodEmojis = ['😢', '😟', '😐', '🙂', '😊', '😄', '🤩'];
+                
+                return `
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <span class="text-2xl">${moodEmojis[entry.mood - 1]}</span>
+                            <div>
+                                <p class="font-medium">${date.toLocaleDateString()}</p>
+                                <p class="text-sm text-gray-600">Mood: ${entry.mood}/7, Energy: ${entry.energy}/10</p>
+                            </div>
+                        </div>
+                        <div class="text-sm text-gray-500">
+                            ${entry.activities.length} activities
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function initializeCharts() {
+            // Prepare data for charts
+            const last30Days = checkinData.slice(-30);
+            const dates = last30Days.map(entry => new Date(entry.date).toLocaleDateString());
+            const moods = last30Days.map(entry => entry.mood);
+            const energies = last30Days.map(entry => entry.energy);
+            
+            // Mood Chart
+            const moodCtx = document.getElementById('moodChart');
+            if (moodCtx) {
+                new Chart(moodCtx, {
+                    type: 'line',
+                    data: {
+                        labels: dates,
+                        datasets: [{
+                            label: 'Mood',
+                            data: moods,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 7,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Energy Chart
+            const energyCtx = document.getElementById('energyChart');
+            if (energyCtx) {
+                new Chart(energyCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: dates,
+                        datasets: [{
+                            label: 'Energy',
+                            data: energies,
+                            backgroundColor: '#10b981',
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 10,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Generate activity heatmap
+            generateActivityHeatmap();
+            
+            // Generate insights
+            generateInsights();
+        }
+
+        function generateActivityHeatmap() {
+            const heatmap = document.getElementById('activityHeatmap');
+            if (!heatmap) return;
+            
+            const last49Days = [];
+            for (let i = 48; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                last49Days.push(date.toISOString().split('T')[0]);
+            }
+            
+            heatmap.innerHTML = last49Days.map(date => {
+                const entry = checkinData.find(e => e.date === date);
+                const activityCount = entry ? entry.activities.length : 0;
+                const intensity = Math.min(activityCount / 4, 1);
+                const opacity = 0.2 + (intensity * 0.8);
+                
+                return `
+                    <div class="w-6 h-6 rounded-sm bg-blue-500" 
+                         style="opacity: ${opacity}" 
+                         title="${date}: ${activityCount} activities">
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function generateInsights() {
+            const insights = document.getElementById('insights');
+            if (!insights || checkinData.length < 7) return;
+            
+            const recent = checkinData.slice(-7);
+            const avgMood = recent.reduce((sum, entry) => sum + entry.mood, 0) / recent.length;
+            const avgEnergy = recent.reduce((sum, entry) => sum + entry.energy, 0) / recent.length;
+            
+            const insightsList = [];
+            
+            if (avgMood > 5) {
+                insightsList.push({
+                    icon: '😊',
+                    title: 'Positive Mood Trend',
+                    description: 'Your mood has been consistently good this week. Keep up the great work!'
+                });
+            }
+            
+            if (avgEnergy < 4) {
+                insightsList.push({
+                    icon: '⚡',
+                    title: 'Low Energy Pattern',
+                    description: 'Consider adding more physical activity or improving your sleep schedule.'
+                });
+            }
+            
+            const exerciseCount = recent.filter(entry => entry.activities.includes('exercise')).length;
+            if (exerciseCount >= 4) {
+                insightsList.push({
+                    icon: '🏃',
+                    title: 'Active Lifestyle',
+                    description: 'Great job staying active! Exercise is strongly linked to better mental health.'
+                });
+            }
+            
+            insights.innerHTML = insightsList.map(insight => `
+                <div class="flex items-start space-x-3 p-4 bg-blue-50 rounded-lg">
+                    <span class="text-2xl">${insight.icon}</span>
+                    <div>
+                        <h3 class="font-semibold text-blue-900">${insight.title}</h3>
+                        <p class="text-blue-700 text-sm">${insight.description}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function generateRecommendations() {
+            const recommendations = document.getElementById('recommendations');
+            if (!recommendations) return;
+            
+            const recent = checkinData.slice(-7);
+            const avgMood = recent.reduce((sum, entry) => sum + entry.mood, 0) / recent.length;
+            const avgEnergy = recent.reduce((sum, entry) => sum + entry.energy, 0) / recent.length;
+            
+            const recs = [];
+            
+            if (avgMood < 4) {
+                recs.push({
+                    icon: '🧘',
+                    title: 'Try Mindfulness Meditation',
+                    description: 'Based on your recent mood patterns, 10 minutes of daily meditation could help improve your emotional well-being.',
+                    action: 'Start 5-min session'
+                });
+            }
+            
+            if (avgEnergy < 5) {
+                recs.push({
+                    icon: '🏃‍♀️',
+                    title: 'Boost Your Energy',
+                    description: 'Light exercise like a 15-minute walk can significantly increase your energy levels.',
+                    action: 'Plan a walk'
+                });
+            }
+            
+            const socialCount = recent.filter(entry => entry.activities.includes('social')).length;
+            if (socialCount < 2) {
+                recs.push({
+                    icon: '👥',
+                    title: 'Connect with Others',
+                    description: 'Social connections are vital for mental health. Consider reaching out to a friend or family member.',
+                    action: 'Send a message'
+                });
+            }
+            
+            if (recs.length === 0) {
+                recs.push({
+                    icon: '⭐',
+                    title: 'Keep Up the Great Work!',
+                    description: 'Your mental health indicators look good. Continue with your current wellness routine.',
+                    action: 'View progress'
+                });
+            }
+            
+            recommendations.innerHTML = recs.map(rec => `
+                <div class="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                    <div class="flex items-start space-x-4">
+                        <span class="text-3xl">${rec.icon}</span>
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-lg mb-2">${rec.title}</h3>
+                            <p class="text-gray-600 mb-4">${rec.description}</p>
+                            <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                                ${rec.action}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97e644cd75b77edf',t:'MTc1Nzc1MjA4MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
